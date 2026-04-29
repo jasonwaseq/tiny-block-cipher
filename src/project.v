@@ -122,12 +122,12 @@ module tiny_cipher (
   localparam [2:0] ST_PERM = 3'd4;
   localparam [2:0] ST_DONE = 3'd5;
 
-  reg [2:0] fsm_state;
+  (* fsm_encoding = "binary" *) reg [2:0] fsm_state;
   reg [63:0] state_reg;
   reg [63:0] mixed_shift_reg;
   reg [63:0] sbox_accum_reg;
   reg [79:0] round_key_reg;
-  reg [5:0] round_counter;
+  reg [4:0] round_counter;
   reg [3:0] nibble_counter;
 
   wire [3:0] sbox_nibble_out;
