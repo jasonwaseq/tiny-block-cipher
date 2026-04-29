@@ -1,9 +1,9 @@
 # Tiny Tapeout project information
 project:
-  title:        ""      # Project title
-  author:       ""      # Your name
+  title:        "Tiny Lightweight Block Cipher"      # Project title
+  author:       "Jason Waseq"      # Your name
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  ""      # One line description of what your project does
+  description:  "64-bit lightweight sequential block cipher core with 80-bit key and deterministic FSM timing"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
 
@@ -23,34 +23,34 @@ project:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  ui[0]: "load plaintext byte"
+  ui[1]: "load key byte"
+  ui[2]: "start pulse"
+  ui[3]: "byte index bit 0"
+  ui[4]: "byte index bit 1"
+  ui[5]: "byte index bit 2"
+  ui[6]: "byte index bit 3"
+  ui[7]: "unused"
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+  uo[0]: "ciphertext byte bit 0"
+  uo[1]: "ciphertext byte bit 1"
+  uo[2]: "ciphertext byte bit 2"
+  uo[3]: "ciphertext byte bit 3"
+  uo[4]: "ciphertext byte bit 4"
+  uo[5]: "ciphertext byte bit 5"
+  uo[6]: "ciphertext byte bit 6"
+  uo[7]: "ciphertext byte bit 7"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[0]: "done flag (output)"
+  uio[1]: "input byte bit 1"
+  uio[2]: "input byte bit 2"
+  uio[3]: "input byte bit 3"
+  uio[4]: "input byte bit 4"
+  uio[5]: "input byte bit 5"
+  uio[6]: "input byte bit 6"
+  uio[7]: "input byte bit 7"
 
 # Do not change!
 yaml_version: 6
