@@ -9,12 +9,57 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+This project implements a compact 64-bit lightweight block cipher core designed for TinyTapeout.
+
+Core properties:
+- Block size: 64 bits
+- Key size: 80 bits
+- Rounds: 16
+- Architecture: sequential, one round per cycle
+
+At the algorithm level, each round performs:
+1. AddRoundKey (XOR state with 64-bit round key)
+2. 4-bit S-box layer (PRESENT-style)
+3. Fixed bit permutation layer
+
+The key schedule is updated every cycle by:
+1. Rotating the 80-bit key
+2. Applying the S-box to the most-significant nibble
+3. XORing the round counter into key bits [19:15]
+
+The controller is an FSM with states IDLE, LOAD, ROUND, and DONE.
+The same datapath logic is reused for every round to reduce area.
+
+Top-level TinyTapeout interface (`tt_um_example`) uses byte-wise loading:
+- `ui[0]`: load plaintext byte
+- `ui[1]`: load key byte
+- `ui[2]`: start pulse
+- `ui[6:3]`: byte index
+- `uio_in[7:0]`: input data byte while loading
+- `uo_out[7:0]`: selected ciphertext byte
+- `uio_out[0]`: done flag
 
 ## How to test
 
-Explain how to use your project
+1. Apply reset (`rst_n = 0`) for a few cycles, then deassert reset (`rst_n = 1`).
+2. Load plaintext bytes through `uio_in[7:0]` with `ui[0]=1` and `ui[6:3]` as byte index 0..7 (little-endian byte order).
+3. Load key bytes through `uio_in[7:0]` with `ui[1]=1` and `ui[6:3]` as byte index 0..9 (little-endian byte order).
+4. Pulse `ui[2]` high for one cycle to start encryption.
+5. Wait until `uio_out[0]` becomes 1 (done).
+6. Read ciphertext bytes from `uo_out[7:0]` by selecting byte index on `ui[6:3]`.
+
+Reference test vector for the core:
+- Plaintext: `0x0123456789ABCDEF`
+- Key: `0x00010203040506070809`
+- Ciphertext: `0x389C40E26AC9BE52`
+
+Local regression command:
+
+```sh
+cd test
+make
+```
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+No external hardware is required.
