@@ -46,13 +46,18 @@ module tiny_cipher_core_tb;
     start = 1'b0;
 
     cycles = 0;
-    while ((done != 1'b1) && (cycles < 40)) begin
+    while ((done != 1'b1) && (cycles < 400)) begin
       @(posedge clk);
       cycles = cycles + 1;
     end
 
     if (done != 1'b1) begin
       $display("FAIL: timeout waiting for done");
+      $fatal(1);
+    end
+
+    if (cycles != 290) begin
+      $display("FAIL: expected done in 290 cycles, got %0d", cycles);
       $fatal(1);
     end
 

@@ -115,23 +115,33 @@ module tiny_cipher (
 );
   parameter integer ROUNDS = 16;
 
-  localparam [1:0] ST_IDLE = 2'd0;
-  localparam [1:0] ST_LOAD = 2'd1;
-  localparam [1:0] ST_ROUND = 2'd2;
-  localparam [1:0] ST_DONE = 2'd3;
+  localparam [2:0] ST_IDLE = 3'd0;
+  localparam [2:0] ST_LOAD = 3'd1;
+  localparam [2:0] ST_PREP = 3'd2;
+  localparam [2:0] ST_SUBST = 3'd3;
+  localparam [2:0] ST_PERM = 3'd4;
+  localparam [2:0] ST_DONE = 3'd5;
 
-  reg [1:0] fsm_state;
+  reg [2:0] fsm_state;
   reg [63:0] state_reg;
+  reg [63:0] mixed_shift_reg;
+  reg [63:0] sbox_accum_reg;
   reg [79:0] round_key_reg;
   reg [5:0] round_counter;
+  reg [3:0] nibble_counter;
 
-  wire [63:0] round_state;
+  wire [3:0] sbox_nibble_out;
+  wire [63:0] perm_state;
   wire [79:0] next_key;
 
-  tiny_cipher_round u_round (
-      .state_in(state_reg),
-      .round_key(round_key_reg[79:16]),
-      .state_out(round_state)
+  tiny_cipher_sbox4 u_sbox_serial (
+      .in_nibble(mixed_shift_reg[3:0]),
+    .out_nibble(sbox_nibble_out)
+  );
+
+  tiny_cipher_permute u_permute (
+    .sbox_state(sbox_accum_reg),
+    .perm_state(perm_state)
   );
 
   tiny_cipher_key_schedule u_key_sched (
@@ -144,8 +154,11 @@ module tiny_cipher (
     if (rst) begin
       fsm_state <= ST_IDLE;
       state_reg <= 64'h0;
+      mixed_shift_reg <= 64'h0;
+      sbox_accum_reg <= 64'h0;
       round_key_reg <= 80'h0;
       round_counter <= 6'd0;
+      nibble_counter <= 4'd0;
       ciphertext <= 64'h0;
       done <= 1'b0;
     end else begin
@@ -159,20 +172,42 @@ module tiny_cipher (
 
         ST_LOAD: begin
           state_reg <= plaintext;
+          mixed_shift_reg <= 64'h0;
+          sbox_accum_reg <= 64'h0;
           round_key_reg <= key;
           round_counter <= 6'd0;
-          fsm_state <= ST_ROUND;
+          nibble_counter <= 4'd0;
+          fsm_state <= ST_PREP;
         end
 
-        ST_ROUND: begin
-          state_reg <= round_state;
+        ST_PREP: begin
+          mixed_shift_reg <= state_reg ^ round_key_reg[79:16];
+          sbox_accum_reg <= 64'h0;
+          nibble_counter <= 4'd0;
+          fsm_state <= ST_SUBST;
+        end
+
+        ST_SUBST: begin
+          mixed_shift_reg <= {4'b0000, mixed_shift_reg[63:4]};
+          sbox_accum_reg <= {sbox_nibble_out, sbox_accum_reg[63:4]};
+          if (nibble_counter == 4'd15) begin
+            nibble_counter <= 4'd0;
+            fsm_state <= ST_PERM;
+          end else begin
+            nibble_counter <= nibble_counter + 4'd1;
+          end
+        end
+
+        ST_PERM: begin
+          state_reg <= perm_state;
           round_key_reg <= next_key;
           if (round_counter == (ROUNDS - 1)) begin
-            ciphertext <= round_state;
+            ciphertext <= perm_state;
             done <= 1'b1;
             fsm_state <= ST_DONE;
           end else begin
             round_counter <= round_counter + 6'd1;
+            fsm_state <= ST_PREP;
           end
         end
 
@@ -188,6 +223,76 @@ module tiny_cipher (
       endcase
     end
   end
+endmodule
+
+module tiny_cipher_permute (
+    input [63:0] sbox_state,
+    output [63:0] perm_state
+);
+  assign perm_state[0] = sbox_state[0];
+  assign perm_state[16] = sbox_state[1];
+  assign perm_state[32] = sbox_state[2];
+  assign perm_state[48] = sbox_state[3];
+  assign perm_state[1] = sbox_state[4];
+  assign perm_state[17] = sbox_state[5];
+  assign perm_state[33] = sbox_state[6];
+  assign perm_state[49] = sbox_state[7];
+  assign perm_state[2] = sbox_state[8];
+  assign perm_state[18] = sbox_state[9];
+  assign perm_state[34] = sbox_state[10];
+  assign perm_state[50] = sbox_state[11];
+  assign perm_state[3] = sbox_state[12];
+  assign perm_state[19] = sbox_state[13];
+  assign perm_state[35] = sbox_state[14];
+  assign perm_state[51] = sbox_state[15];
+  assign perm_state[4] = sbox_state[16];
+  assign perm_state[20] = sbox_state[17];
+  assign perm_state[36] = sbox_state[18];
+  assign perm_state[52] = sbox_state[19];
+  assign perm_state[5] = sbox_state[20];
+  assign perm_state[21] = sbox_state[21];
+  assign perm_state[37] = sbox_state[22];
+  assign perm_state[53] = sbox_state[23];
+  assign perm_state[6] = sbox_state[24];
+  assign perm_state[22] = sbox_state[25];
+  assign perm_state[38] = sbox_state[26];
+  assign perm_state[54] = sbox_state[27];
+  assign perm_state[7] = sbox_state[28];
+  assign perm_state[23] = sbox_state[29];
+  assign perm_state[39] = sbox_state[30];
+  assign perm_state[55] = sbox_state[31];
+  assign perm_state[8] = sbox_state[32];
+  assign perm_state[24] = sbox_state[33];
+  assign perm_state[40] = sbox_state[34];
+  assign perm_state[56] = sbox_state[35];
+  assign perm_state[9] = sbox_state[36];
+  assign perm_state[25] = sbox_state[37];
+  assign perm_state[41] = sbox_state[38];
+  assign perm_state[57] = sbox_state[39];
+  assign perm_state[10] = sbox_state[40];
+  assign perm_state[26] = sbox_state[41];
+  assign perm_state[42] = sbox_state[42];
+  assign perm_state[58] = sbox_state[43];
+  assign perm_state[11] = sbox_state[44];
+  assign perm_state[27] = sbox_state[45];
+  assign perm_state[43] = sbox_state[46];
+  assign perm_state[59] = sbox_state[47];
+  assign perm_state[12] = sbox_state[48];
+  assign perm_state[28] = sbox_state[49];
+  assign perm_state[44] = sbox_state[50];
+  assign perm_state[60] = sbox_state[51];
+  assign perm_state[13] = sbox_state[52];
+  assign perm_state[29] = sbox_state[53];
+  assign perm_state[45] = sbox_state[54];
+  assign perm_state[61] = sbox_state[55];
+  assign perm_state[14] = sbox_state[56];
+  assign perm_state[30] = sbox_state[57];
+  assign perm_state[46] = sbox_state[58];
+  assign perm_state[62] = sbox_state[59];
+  assign perm_state[15] = sbox_state[60];
+  assign perm_state[31] = sbox_state[61];
+  assign perm_state[47] = sbox_state[62];
+  assign perm_state[63] = sbox_state[63];
 endmodule
 
 module tiny_cipher_round (

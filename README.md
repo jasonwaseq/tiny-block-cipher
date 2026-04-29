@@ -25,7 +25,7 @@ Control uses FSM states:
 - ROUND
 - DONE
 
-With the current wrapper protocol, encryption completion is deterministic at 18 cycles from start pulse observation at top-level I/O.
+With the current wrapper protocol, encryption completion is deterministic at 290 cycles from start pulse observation at top-level I/O.
 
 ## TinyTapeout I/O Protocol
 

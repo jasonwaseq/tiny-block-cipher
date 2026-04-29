@@ -65,14 +65,14 @@ async def test_project(dut):
     dut.ui_in.value = 0x00
 
     done_cycle = None
-    for cycle in range(40):
+    for cycle in range(320):
         await ClockCycles(dut.clk, 1)
         if int(dut.uio_out.value) & 0x1:
             done_cycle = cycle + 1
             break
 
     assert done_cycle is not None, "Timeout waiting for done"
-    assert done_cycle == 18, f"Unexpected latency: {done_cycle} cycles (expected 18)"
+    assert done_cycle == 290, f"Unexpected latency: {done_cycle} cycles (expected 290)"
 
     dut._log.info("Reading ciphertext bytes")
     observed = 0

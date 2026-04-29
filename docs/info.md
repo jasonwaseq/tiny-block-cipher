@@ -30,6 +30,8 @@ The key schedule is updated every cycle by:
 The controller is an FSM with states IDLE, LOAD, ROUND, and DONE.
 The same datapath logic is reused for every round to reduce area.
 
+Because one 4-bit S-box instance is reused across nibble operations, encryption latency is deterministic and longer than a fully parallel round implementation.
+
 Top-level TinyTapeout interface (`tt_um_example`) uses byte-wise loading:
 - `ui[0]`: load plaintext byte
 - `ui[1]`: load key byte
